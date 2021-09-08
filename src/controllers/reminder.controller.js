@@ -35,22 +35,6 @@ const reminderController = {
 		}
 	},
 
-	findAll: async (req, res) => {
-		// eslint-disable-next-line consistent-return
-		try {
-			const reminders = await db.getAllReminders()
-			res.json({
-				allReminders: reminders,
-			})
-		} catch (error) {
-			console.log(error)
-			res.json({
-				status: 400,
-				data: null,
-				message: error.message,
-			})
-		}
-	},
 	getAll: async (req, res) => {
 		const data = await db.findAll('Reminders')
 		return Response.send(
