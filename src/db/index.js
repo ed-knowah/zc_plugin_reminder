@@ -8,6 +8,14 @@ const BASE_URL = `${getDevBaseUrl()}/data`
 const readBaseUrl = `${BASE_URL}/read`
 const writeBaseUrl = `${BASE_URL}/write`
 
+/** *
+ * create
+ * findAll
+ * findByid
+ * deleteById
+ * updateById
+ */
+
 export default function makeDb() {
 	// functions go here
 	/**
@@ -40,20 +48,23 @@ export default function makeDb() {
 			...dbResponse.data.payload,
 		}
 	}
-	// FFF
 	async function findAll(modelName) {
 		/**
 		 * sample of details used
 		 * PLUGIN_ID zc_reminder
 		 * ORG_ID darwin_organization
 		 */
-
 		try {
 			const res = await axios.get(
-				`${readBaseUrl}/zc_reminder/reminders/darwin_organisation`
+				`${readBaseUrl}/zc_reminder/reminders/darwin_organization`
 			)
 			return res
 		} catch (err) {
+			if (!err.response) {
+				throw new Error(
+					'Server Internal error, we will figure it out, try again later'
+				)
+			}
 			return err.response
 		}
 	}
@@ -62,32 +73,70 @@ export default function makeDb() {
 		// findById function that interacts with the database endpoint
 		try {
 			const res = await axios({
-				url: `${readBaseUrl}/${PLUGIN_ID}/${collectionName}/${ORG_ID}?id=${id}`,
+				url: `${readBaseUrl}/${PLUGIN_ID}/${collectionName}/${ORG_ID}?object_id=${id}`,
 				method: get,
 			})
-			return res.data.data
+			return res
 		} catch (error) {
-			return error.response.data
+			if (!error.response) {
+				throw new Error(
+					'Server Internal error, we will figure it out, try again later'
+				)
+			}
+			return error.response
 		}
 	}
 
 	async function deleteOne(collectionName, id) {
 		// Delete a document by
 		try {
-			const res = await axios.post(writeBaseUrl, {
-				plugin_id: PLUGIN_ID,
-				organization_id: ORG_ID,
-				collection_name: collectionName,
-				bulk_write: false,
-				object_id: id,
+			const res = await axios.delete(writeBaseUrl, {
+				data: {
+					plugin_id: PLUGIN_ID,
+					organization_id: ORG_ID,
+					collection_name: collectionName,
+					bulk_write: false,
+					object_id: id,
+				},
 			})
-			return res.data
+			return res
 		} catch (error) {
-			return error.response.data
+			if (!error.response) {
+				throw new Error(
+					'Server Internal error, we will figure it out, try again later'
+				)
+			}
+			return error.response
 		}
 	}
 
-	async function update({ id, ...params }) {
+	async function update(collectionName, id, payload) {
+		try {
+			const res = await axios({
+				method: 'put',
+				url: `${writeBaseUrl}`,
+				data: {
+					plugin_id: PLUGIN_ID,
+					organization_id: ORG_ID,
+					collection_name: collectionName,
+					object_id: id,
+					payload,
+				},
+			})
+			return res.data.success
+		} catch (err) {
+			if (!err.response) {
+				throw new Error(
+					'Server Internal error, we will figure it out, try again later'
+				)
+			}
+			console.log(res.data, 'bad ')
+
+			return false
+		}
+	}
+
+	async function updateById({ id, ...params }) {
 		try {
 			const res = await axios({
 				method: 'put',
@@ -104,9 +153,9 @@ export default function makeDb() {
 			})
 			return res.data.data.modified_document > 0
 		} catch (err) {
-			return err.response
+			return err.response.data
 		}
 	}
 
-	return Object.freeze({ create, findAll, update, findById, deleteOne })
+	return Object.freeze({ create, findAll, updateById, findById, deleteOne })
 }
